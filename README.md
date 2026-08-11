@@ -1,5 +1,7 @@
 # grantweave
 
+[![ci](https://github.com/realdecimalist/grantweave/actions/workflows/ci.yml/badge.svg)](https://github.com/realdecimalist/grantweave/actions/workflows/ci.yml)
+
 An open-source reference implementation of a **unified grant management system**: grants, plans, entities, funding sources, and performance metrics in one linked data model — the data shape at the core of public-sector grant administration, where the question that matters is not "what did we award?" but *"what did each funding source actually move?"*
 
 Built by [ForwardIT](https://theforwardit.com) as a public, inspectable demonstration of the domain. It is intentionally small enough to read in one sitting and complete enough to answer cross-domain questions end to end.
