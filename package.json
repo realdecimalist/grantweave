@@ -1,0 +1,26 @@
+{
+  "name": "grantweave",
+  "version": "0.1.0",
+  "description": "Open-source reference implementation of a unified grant management system: grants, plans, entities, funding sources, and performance metrics in one linked data model.",
+  "type": "module",
+  "license": "MIT",
+  "author": "ForwardIT",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "tsx src/api/server.ts",
+    "seed": "tsx src/seed.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "fastify": "^5.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  }
+}
