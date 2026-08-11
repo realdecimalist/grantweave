@@ -1,6 +1,6 @@
 import type { DatabaseSync } from 'node:sqlite';
 import { lastId } from '../db.js';
-import { DomainError, rethrowUnique } from './errors.js';
+import { DomainError, rethrowConstraint } from './errors.js';
 
 export type EntityKind = 'service_center' | 'district' | 'charter' | 'campus';
 
@@ -39,7 +39,7 @@ export function createEntity(
       .run(input.parentId ?? null, input.kind, input.name, input.localCode);
     return lastId(res);
   } catch (err) {
-    rethrowUnique(err, 'duplicate', `entity local code ${input.localCode} already exists`);
+    rethrowConstraint(err, 'duplicate', `entity local code ${input.localCode} already exists`);
   }
 }
 

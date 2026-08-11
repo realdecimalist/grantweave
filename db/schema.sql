@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS grants (
   code TEXT NOT NULL UNIQUE,
   title TEXT NOT NULL,
   fiscal_year INTEGER NOT NULL,
-  appropriation_cents INTEGER NOT NULL CHECK (appropriation_cents >= 0),
+  appropriation_cents INTEGER NOT NULL CHECK (appropriation_cents >= 0 AND typeof(appropriation_cents) = 'integer'),
   status TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('planned', 'open', 'closed', 'archived'))
 );
 
@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS applications (
   id INTEGER PRIMARY KEY,
   grant_id INTEGER NOT NULL REFERENCES grants(id),
   entity_id INTEGER NOT NULL REFERENCES entities(id),
-  requested_cents INTEGER NOT NULL CHECK (requested_cents > 0),
+  requested_cents INTEGER NOT NULL CHECK (requested_cents > 0 AND typeof(requested_cents) = 'integer'),
   status TEXT NOT NULL DEFAULT 'draft'
     CHECK (status IN ('draft', 'submitted', 'under_review', 'approved', 'rejected', 'withdrawn')),
   submitted_at TEXT,
@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS applications (
 CREATE TABLE IF NOT EXISTS awards (
   id INTEGER PRIMARY KEY,
   application_id INTEGER NOT NULL UNIQUE REFERENCES applications(id),
-  awarded_cents INTEGER NOT NULL CHECK (awarded_cents > 0),
+  awarded_cents INTEGER NOT NULL CHECK (awarded_cents > 0 AND typeof(awarded_cents) = 'integer'),
   period_start TEXT NOT NULL,
   period_end TEXT NOT NULL,
   status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'suspended', 'closed')),
@@ -51,14 +51,14 @@ CREATE TABLE IF NOT EXISTS budget_lines (
   award_id INTEGER NOT NULL REFERENCES awards(id),
   category TEXT NOT NULL
     CHECK (category IN ('payroll', 'professional_services', 'supplies', 'other_operating', 'capital_outlay')),
-  amount_cents INTEGER NOT NULL CHECK (amount_cents > 0),
+  amount_cents INTEGER NOT NULL CHECK (amount_cents > 0 AND typeof(amount_cents) = 'integer'),
   UNIQUE (award_id, category)
 );
 
 CREATE TABLE IF NOT EXISTS expenditures (
   id INTEGER PRIMARY KEY,
   budget_line_id INTEGER NOT NULL REFERENCES budget_lines(id),
-  amount_cents INTEGER NOT NULL CHECK (amount_cents > 0),
+  amount_cents INTEGER NOT NULL CHECK (amount_cents > 0 AND typeof(amount_cents) = 'integer'),
   spent_on TEXT NOT NULL,
   description TEXT NOT NULL
 );
@@ -92,7 +92,7 @@ CREATE TABLE IF NOT EXISTS strategy_funding (
   id INTEGER PRIMARY KEY,
   strategy_id INTEGER NOT NULL REFERENCES strategies(id),
   award_id INTEGER NOT NULL REFERENCES awards(id),
-  planned_cents INTEGER NOT NULL CHECK (planned_cents > 0),
+  planned_cents INTEGER NOT NULL CHECK (planned_cents > 0 AND typeof(planned_cents) = 'integer'),
   UNIQUE (strategy_id, award_id)
 );
 

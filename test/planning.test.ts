@@ -95,6 +95,40 @@ describe('strategy funding', () => {
 });
 
 describe('plans, targets, readings', () => {
+  it('rejects a second plan for the same entity and fiscal year', () => {
+    const f = fixture();
+    expect(() =>
+      createPlan(f.db, { entityId: f.districtId, fiscalYear: 2026, title: 'Alpha DIP v2' }),
+    ).toThrowError(expect.objectContaining({ code: 'duplicate' }));
+  });
+
+  it('rejects a duplicate reading for the same metric, entity, and period', () => {
+    const f = fixture();
+    const metricId = createMetric(f.db, {
+      code: 'attendance2',
+      name: 'Attendance',
+      unit: 'percent',
+      direction: 'increase',
+    });
+    recordReading(f.db, { metricId, entityId: f.districtId, period: '2026-01-15', value: 90, source: 'test' });
+    expect(() =>
+      recordReading(f.db, { metricId, entityId: f.districtId, period: '2026-01-15', value: 91, source: 'test' }),
+    ).toThrowError(expect.objectContaining({ code: 'duplicate' }));
+  });
+
+  it('rejects readings on impossible calendar dates', () => {
+    const f = fixture();
+    const metricId = createMetric(f.db, {
+      code: 'attendance3',
+      name: 'Attendance',
+      unit: 'percent',
+      direction: 'increase',
+    });
+    expect(() =>
+      recordReading(f.db, { metricId, entityId: f.districtId, period: '2026-02-30', value: 90, source: 'test' }),
+    ).toThrowError(expect.objectContaining({ code: 'validation' }));
+  });
+
   it('adopts a draft plan exactly once', () => {
     const f = fixture();
     adoptPlan(f.db, f.planId);

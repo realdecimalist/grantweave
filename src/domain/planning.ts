@@ -1,6 +1,6 @@
 import type { DatabaseSync } from 'node:sqlite';
 import { lastId, transact } from '../db.js';
-import { DomainError, rethrowUnique } from './errors.js';
+import { assertCents, DomainError, rethrowConstraint } from './errors.js';
 import { isWithinSubtree } from './entities.js';
 
 export function createPlan(
@@ -15,7 +15,7 @@ export function createPlan(
       .run(input.entityId, input.fiscalYear, input.title);
     return lastId(res);
   } catch (err) {
-    rethrowUnique(
+    rethrowConstraint(
       err,
       'duplicate',
       `entity ${input.entityId} already has a plan for fiscal year ${input.fiscalYear}`,
@@ -46,7 +46,7 @@ export function addGoal(
       .run(input.planId, input.ordinal, input.statement);
     return lastId(res);
   } catch (err) {
-    rethrowUnique(err, 'duplicate', `plan ${input.planId} already has goal #${input.ordinal}`);
+    rethrowConstraint(err, 'duplicate', `plan ${input.planId} already has goal #${input.ordinal}`);
   }
 }
 
@@ -62,7 +62,7 @@ export function addStrategy(
       .run(input.goalId, input.ordinal, input.description);
     return lastId(res);
   } catch (err) {
-    rethrowUnique(err, 'duplicate', `goal ${input.goalId} already has strategy #${input.ordinal}`);
+    rethrowConstraint(err, 'duplicate', `goal ${input.goalId} already has strategy #${input.ordinal}`);
   }
 }
 
@@ -70,6 +70,7 @@ export function fundStrategy(
   db: DatabaseSync,
   input: { strategyId: number; awardId: number; plannedCents: number },
 ): number {
+  assertCents('plannedCents', input.plannedCents);
   return transact(db, () => {
     const strategy = db
       .prepare(
@@ -116,7 +117,7 @@ export function fundStrategy(
         .run(input.strategyId, input.awardId, input.plannedCents);
       return lastId(res);
     } catch (err) {
-      rethrowUnique(
+      rethrowConstraint(
         err,
         'duplicate',
         `strategy ${input.strategyId} is already funded by award ${input.awardId}`,

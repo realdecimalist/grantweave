@@ -78,6 +78,22 @@ describe('planPerformance', () => {
 });
 
 describe('fundingImpact', () => {
+  it('repeats a goal\'s funded dollars once per target — the grain is (funding source, target)', () => {
+    const secondMetric = db
+      .prepare("INSERT INTO metrics (code, name, unit, direction) VALUES ('reading_masters_pct', 'Masters', 'percent', 'increase')")
+      .run();
+    const readingGoalId = (
+      db.prepare('SELECT id FROM goals WHERE plan_id = ? AND ordinal = 1').get(ids.bluebonnetPlan) as { id: number }
+    ).id;
+    db.prepare(
+      'INSERT INTO targets (goal_id, metric_id, baseline_value, target_value, due_fiscal_year) VALUES (?, ?, 20, 30, 2026)',
+    ).run(readingGoalId, Number(secondMetric.lastInsertRowid));
+
+    const esserRows = fundingImpact(db).filter((r) => r.funding_source === 'ESSER-III');
+    expect(esserRows).toHaveLength(2);
+    for (const row of esserRows) expect(row.funded_cents).toBe(25_000_000);
+  });
+
   it('traces every funding source through plans to metric movement', () => {
     const rows = fundingImpact(db);
     expect(rows).toHaveLength(2);

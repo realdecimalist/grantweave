@@ -1,6 +1,6 @@
 import type { DatabaseSync } from 'node:sqlite';
 import { lastId } from '../db.js';
-import { DomainError, rethrowUnique } from './errors.js';
+import { assertCents, DomainError, rethrowConstraint } from './errors.js';
 
 export type Origin = 'federal' | 'state' | 'local' | 'private';
 export type MetricUnit = 'percent' | 'count' | 'currency' | 'ratio';
@@ -16,7 +16,7 @@ export function createFundingSource(
       .run(input.code, input.name, input.origin);
     return lastId(res);
   } catch (err) {
-    rethrowUnique(err, 'duplicate', `funding source code ${input.code} already exists`);
+    rethrowConstraint(err, 'duplicate', `funding source code ${input.code} already exists`);
   }
 }
 
@@ -30,6 +30,7 @@ export function createGrant(
     appropriationCents: number;
   },
 ): number {
+  assertCents('appropriationCents', input.appropriationCents, 0);
   const source = db.prepare('SELECT id FROM funding_sources WHERE id = ?').get(input.fundingSourceId);
   if (!source) throw new DomainError('not_found', `funding source ${input.fundingSourceId} not found`);
   try {
@@ -40,7 +41,7 @@ export function createGrant(
       .run(input.fundingSourceId, input.code, input.title, input.fiscalYear, input.appropriationCents);
     return lastId(res);
   } catch (err) {
-    rethrowUnique(err, 'duplicate', `grant code ${input.code} already exists`);
+    rethrowConstraint(err, 'duplicate', `grant code ${input.code} already exists`);
   }
 }
 
@@ -54,6 +55,6 @@ export function createMetric(
       .run(input.code, input.name, input.unit, input.direction);
     return lastId(res);
   } catch (err) {
-    rethrowUnique(err, 'duplicate', `metric code ${input.code} already exists`);
+    rethrowConstraint(err, 'duplicate', `metric code ${input.code} already exists`);
   }
 }

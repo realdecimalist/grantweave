@@ -1,6 +1,6 @@
 import type { DatabaseSync } from 'node:sqlite';
 import { lastId } from '../db.js';
-import { DomainError, rethrowUnique } from './errors.js';
+import { DomainError, rethrowConstraint } from './errors.js';
 
 export function addTarget(
   db: DatabaseSync,
@@ -33,7 +33,7 @@ export function addTarget(
       .run(input.goalId, input.metricId, input.baselineValue, input.targetValue, input.dueFiscalYear);
     return lastId(res);
   } catch (err) {
-    rethrowUnique(err, 'duplicate', `goal ${input.goalId} already targets metric ${input.metricId}`);
+    rethrowConstraint(err, 'duplicate', `goal ${input.goalId} already targets metric ${input.metricId}`);
   }
 }
 
@@ -43,6 +43,10 @@ export function recordReading(
 ): number {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(input.period)) {
     throw new DomainError('validation', `period must be an ISO date (YYYY-MM-DD), got "${input.period}"`);
+  }
+  const parsed = new Date(`${input.period}T00:00:00Z`);
+  if (Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== input.period) {
+    throw new DomainError('validation', `period "${input.period}" is not a real calendar date`);
   }
   const metric = db.prepare('SELECT id FROM metrics WHERE id = ?').get(input.metricId);
   if (!metric) throw new DomainError('not_found', `metric ${input.metricId} not found`);
@@ -54,7 +58,7 @@ export function recordReading(
       .run(input.metricId, input.entityId, input.period, input.value, input.source);
     return lastId(res);
   } catch (err) {
-    rethrowUnique(
+    rethrowConstraint(
       err,
       'duplicate',
       `metric ${input.metricId} already has a reading for entity ${input.entityId} in period ${input.period}`,

@@ -25,9 +25,19 @@ export class DomainError extends Error {
   }
 }
 
-export function rethrowUnique(err: unknown, code: DomainErrorCode, message: string): never {
-  if (err instanceof Error && err.message.includes('UNIQUE constraint failed')) {
-    throw new DomainError(code, message);
+export function rethrowConstraint(err: unknown, code: DomainErrorCode, message: string): never {
+  if (err instanceof Error) {
+    if (err.message.includes('UNIQUE constraint failed')) throw new DomainError(code, message);
+    if (err.message.includes('CHECK constraint failed')) throw new DomainError('validation', err.message);
   }
   throw err;
+}
+
+export function assertCents(field: string, value: number, minimum = 1): void {
+  if (!Number.isInteger(value) || value < minimum || value > Number.MAX_SAFE_INTEGER) {
+    throw new DomainError(
+      'validation',
+      `${field} must be an integer number of cents >= ${minimum}, got ${value}`,
+    );
+  }
 }

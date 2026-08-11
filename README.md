@@ -60,12 +60,13 @@ The five RFP-shaped domains and how they link:
 These are guarded in the service layer (with SQLite `CHECK`/`UNIQUE`/FK constraints backing them) and each has a failing test:
 
 - Application lifecycle is a state machine: `draft → submitted → under_review → approved/rejected`, with `withdrawn` reachable until decision; awards can only be created from approved applications, one award per application.
-- Σ budget lines ≤ awarded amount; Σ expenditures per line ≤ that line; spending freezes when an award is suspended or closed.
+- Σ awards per grant ≤ the grant's appropriation; Σ budget lines ≤ awarded amount; Σ expenditures per line ≤ that line; budgeting and spending freeze when an award is suspended or closed.
 - Σ planned strategy funding per award ≤ awarded amount.
 - **Funding alignment**: a plan's strategies can only be funded by awards belonging to the plan's entity or its subtree — a district plan can spend its campuses' awards, never a neighboring district's.
 - Entity hierarchy rules (a campus must belong to a district or charter), one plan per entity per fiscal year, one application per entity per grant, one reading per metric/entity/period.
 - Targets must move in the metric's declared direction (an "increase" metric cannot target below baseline).
-- All money is integer cents. All periods are ISO dates.
+- All money is integer cents, enforced at three layers: API schema (`type: integer, minimum: 1`), a domain guard, and a `typeof(...) = 'integer'` CHECK in the SQLite schema.
+- All periods are ISO dates and must be real calendar dates ("2026-02-30" is rejected, not stored).
 
 ## Reports
 
@@ -76,7 +77,11 @@ These are guarded in the service layer (with SQLite `CHECK`/`UNIQUE`/FK constrai
 | `GET /plans/:id/performance` | For a plan: each goal's strategies, the dollars behind them, and latest metric progress toward target |
 | `GET /reports/funding-impact` | Across the system: which funding sources are moving which metrics, where, at what cost |
 
-Write endpoints cover the full lifecycle: `POST /funding-sources`, `/grants`, `/entities`, `/applications`, `/applications/:id/transition`, `/awards`, `/awards/:id/budget-lines`, `/budget-lines/:id/expenditures`, `/plans`, `/plans/:id/adopt`, `/plans/:id/goals`, `/goals/:id/strategies`, `/goals/:id/targets`, `/strategies/:id/funding`, `/metrics`, `/readings`. Domain violations map to structured errors (`409` invalid transition/duplicate, `422` budget exceeded/funding misaligned, `404` not found).
+`funding-impact` rows are one per (funding source, target): `funded_cents` is the money behind the goal that the target measures, so a goal with several targets repeats its funding on each row — sum across a single goal's rows and you double-count by design.
+
+Browsing endpoints: `GET /health`, `GET /funding-sources`, `GET /grants`, `GET /entities` list the raw records; everything richer is served report-shaped.
+
+Write endpoints cover the full lifecycle: `POST /funding-sources`, `/grants`, `/entities`, `/applications`, `/applications/:id/transition`, `/awards`, `/awards/:id/budget-lines`, `/budget-lines/:id/expenditures`, `/plans`, `/plans/:id/adopt`, `/plans/:id/goals`, `/goals/:id/strategies`, `/goals/:id/targets`, `/strategies/:id/funding`, `/metrics`, `/readings`. Domain violations map to structured errors (`409` invalid transition/duplicate, `422` budget exceeded/funding misaligned, `404` not found). Every request body and path parameter is validated against a JSON schema before it reaches the domain layer, so malformed input — missing fields, bad enums, fractional or non-numeric cents — returns a structured `400`.
 
 ## Design notes
 

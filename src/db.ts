@@ -10,15 +10,21 @@ export function openDb(path = ':memory:'): DatabaseSync {
   return db;
 }
 
+const txDepth = new WeakMap<DatabaseSync, number>();
+
 export function transact<T>(db: DatabaseSync, fn: () => T): T {
-  db.exec('BEGIN');
+  const depth = txDepth.get(db) ?? 0;
+  db.exec(depth === 0 ? 'BEGIN' : `SAVEPOINT sp_${depth}`);
+  txDepth.set(db, depth + 1);
   try {
     const out = fn();
-    db.exec('COMMIT');
+    db.exec(depth === 0 ? 'COMMIT' : `RELEASE sp_${depth}`);
     return out;
   } catch (err) {
-    db.exec('ROLLBACK');
+    db.exec(depth === 0 ? 'ROLLBACK' : `ROLLBACK TO sp_${depth}; RELEASE sp_${depth}`);
     throw err;
+  } finally {
+    txDepth.set(db, depth);
   }
 }
 
