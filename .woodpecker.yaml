@@ -1,0 +1,13 @@
+when:
+  - event: push
+    branch: main
+  - event: [pull_request, manual]
+
+steps:
+  - name: test
+    # Node 24: src/db.ts uses the built-in node:sqlite (package.json engines >=24).
+    image: node:24-bookworm
+    commands:
+      - npm ci
+      - npm run typecheck
+      - npm test
