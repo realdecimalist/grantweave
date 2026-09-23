@@ -1,6 +1,6 @@
 # grantweave
 
-[![ci](https://github.com/realdecimalist/grantweave/actions/workflows/ci.yml/badge.svg)](https://github.com/realdecimalist/grantweave/actions/workflows/ci.yml)
+[![ci](https://ci.fluxpointstudios.com/api/badges/19/status.svg?branch=main)](https://ci.fluxpointstudios.com/repos/19)
 
 An open-source reference implementation of a **unified grant management system**: grants, plans, entities, funding sources, and performance metrics in one linked data model — the data shape at the core of public-sector grant administration, where the question that matters is not "what did we award?" but *"what did each funding source actually move?"*
 
